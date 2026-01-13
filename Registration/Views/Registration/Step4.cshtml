@@ -1,0 +1,22 @@
+﻿@model Registration.Models.RegistrationStep4ViewModel
+
+@{
+    ViewData["Title"] = "Rejestracja zakończona";
+}
+
+<div class="card shadow-sm mx-auto text-center" style="max-width: 600px;">
+    <div class="card-body">
+        <h3 class="mb-3">Dziękujemy, @Model.FirstName!</h3>
+
+        <p>Twoja rejestracja została ukończona.</p>
+
+        <div class="alert alert-success">
+            <strong>Twój numer rejestracyjny:</strong><br />
+            <span style="font-size: 1.7rem;">
+                @Model.AssignedNumber
+            </span>
+        </div>
+
+        <p>Wkrótce otrzymasz e-mail z potwierdzeniem.</p>
+    </div>
+</div>

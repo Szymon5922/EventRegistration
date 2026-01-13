@@ -1,0 +1,39 @@
+﻿@model Registration.Models.RegistrationStep2ViewModel
+
+@{
+    ViewData["Title"] = "Rejestracja - Krok 2";
+}
+
+<div class="card shadow-sm mx-auto" style="max-width: 600px;">
+    <div class="card-body">
+        <h3 class="text-center mb-4">Krok 2 – Dane adresowe</h3>
+
+        <form method="post">
+            <input type="hidden" asp-for="ResumeToken" />
+
+            <div class="mb-3">
+                <label class="form-label">Wiek</label>
+                <input asp-for="Age" type="number" class="form-control" />
+                <span asp-validation-for="Age" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Miasto</label>
+                <input asp-for="City" class="form-control" />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Kod pocztowy</label>
+                <input asp-for="PostalCode" class="form-control" />
+                <span asp-validation-for="PostalCode" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Dalej</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
