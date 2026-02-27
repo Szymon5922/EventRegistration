@@ -51,15 +51,17 @@ public class ReminderWorker : BackgroundService
     {
         var cutoff = _clock.Now.AddHours(-1);
 
-        var list = await _repo.GetIncompleteOlderThanAsync(cutoff, ct);
+        var list = await repo.GetIncompleteOlderThanAsync(cutoff, ct);
 
         if (!list.Any())
             return;
 
         foreach (var reg in list)
         {
-            if (reg.LastReminderSentAt != null)
-                continue;
+            var marked = await repo.TryMarkReminderSentAsync(reg.Id, _clock.Now, ct);
+
+            if (!marked)
+                continue; //sent by other instance
 
             var link = $"https://localhost:5001/registration/resume/{reg.ResumeToken}";
 
