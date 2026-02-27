@@ -12,5 +12,6 @@ namespace Application.Interfaces
         Task UpdateAsync(RegistrationData registration, CancellationToken ct);
 
         Task<IReadOnlyList<RegistrationData>> GetIncompleteOlderThanAsync(DateTime cutoff, CancellationToken ct);
+        Task<bool> TryMarkReminderSentAsync(Guid id, DateTime now, CancellationToken ct);
     }
 }

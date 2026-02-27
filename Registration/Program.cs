@@ -1,3 +1,4 @@
+using Application.Configuration;
 using Application.Interfaces;
 using Application.Services;
 using Infrastructure.BackgroundServices;
@@ -40,6 +41,7 @@ builder.Services.AddHostedService<EmailDispatcherHostedService>();
 builder.Services.AddHostedService<ReminderWorker>();
 
 // Application
+builder.Services.Configure<AppOptions>(builder.Configuration.GetSection("App"));
 builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
