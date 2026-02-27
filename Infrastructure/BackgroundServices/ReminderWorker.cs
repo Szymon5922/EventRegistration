@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,18 +8,18 @@ namespace Infrastructure.Email;
 
 public class ReminderWorker : BackgroundService
 {
-    private readonly IRegistrationRepository _repo;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IEmailDispatcher _dispatcher;
     private readonly IDateTimeProvider _clock;
     private readonly ILogger<ReminderWorker> _logger;
 
     public ReminderWorker(
-        IRegistrationRepository repo,
+        IServiceScopeFactory scopeFactory,
         IEmailDispatcher dispatcher,
         IDateTimeProvider clock,
         ILogger<ReminderWorker> logger)
     {
-        _repo = repo;
+        _scopeFactory = scopeFactory;
         _dispatcher = dispatcher;
         _clock = clock;
         _logger = logger;
@@ -32,7 +33,10 @@ public class ReminderWorker : BackgroundService
         {
             try
             {
-                await ProcessRemindersAsync(stoppingToken);
+                using var scope = _scopeFactory.CreateScope();
+                var repo = scope.ServiceProvider.GetRequiredService<IRegistrationRepository>();
+
+                await ProcessRemindersAsync(repo, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -43,7 +47,7 @@ public class ReminderWorker : BackgroundService
         }
     }
 
-    private async Task ProcessRemindersAsync(CancellationToken ct)
+    private async Task ProcessRemindersAsync(IRegistrationRepository repo, CancellationToken ct)
     {
         var cutoff = _clock.Now.AddHours(-1);
 
