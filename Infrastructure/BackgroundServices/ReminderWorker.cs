@@ -1,8 +1,10 @@
-﻿using Application.Interfaces;
+﻿using Application.Configuration;
+using Application.Interfaces;
 using Application.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Email;
 
@@ -12,16 +14,19 @@ public class ReminderWorker : BackgroundService
     private readonly IEmailDispatcher _dispatcher;
     private readonly IDateTimeProvider _clock;
     private readonly ILogger<ReminderWorker> _logger;
+    private readonly AppOptions _options;
 
     public ReminderWorker(
         IServiceScopeFactory scopeFactory,
         IEmailDispatcher dispatcher,
         IDateTimeProvider clock,
+        IOptions<AppOptions> options,
         ILogger<ReminderWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _dispatcher = dispatcher;
         _clock = clock;
+        _options = options.Value;
         _logger = logger;
     }
 
@@ -63,7 +68,7 @@ public class ReminderWorker : BackgroundService
             if (!marked)
                 continue; //sent by other instance
 
-            var link = $"https://localhost:5001/registration/resume/{reg.ResumeToken}";
+            var link = $"{_options.BaseUrl}/registration/resume/{reg.ResumeToken}";
 
             var message = new EmailMessage(
                 To: reg.Email.Address,
@@ -72,9 +77,6 @@ public class ReminderWorker : BackgroundService
             );
 
             await _dispatcher.EnqueueAsync(message);
-
-            reg.LastReminderSentAt = _clock.Now;
-            await _repo.UpdateAsync(reg, ct);
         }
     }
 }
