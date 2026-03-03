@@ -22,8 +22,14 @@ public class RegistrationRepository(RegistrationDbContext dbContext) : IRegistra
 
     public async Task<bool> EmailExistsAsync(string email, CancellationToken ct = default)
     {
+        var result = Domain.ValueObjects.Email.Create(email);
+        if (result.IsFailure)
+            return false;
+
+        var emailVo = result.Value;
+
         return await _dbContext.Registrations
-            .AnyAsync(r => r.Email.Address == email, ct);
+            .AnyAsync(r => r.Email == emailVo, ct);
     }
 
     public async Task AddAsync(RegistrationData registrationData, CancellationToken ct = default)
