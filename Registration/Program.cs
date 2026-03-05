@@ -12,10 +12,12 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 //Key Vault
-var keyVaultUri = builder.Configuration["KeyVault:Uri"];
-if(!string.IsNullOrEmpty(keyVaultUri))
-    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
-
+if(builder.Environment.IsProduction())
+{
+    var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+    if (!string.IsNullOrWhiteSpace(keyVaultUri))
+        builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+}
 // MVC
 builder.Services.AddControllersWithViews();
 
@@ -28,12 +30,20 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Infrastructure - data access
-var connectionString =
-    builder.Configuration["SqlConnectionString"]
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDbContext<RegistrationDbContext>(options =>
+        options.UseInMemoryDatabase("RegistrationDev"));
+}
+else
+{
+    var connectionString =
+        builder.Configuration["SqlConnectionString"]
         ?? throw new InvalidOperationException("SQL connection string not found.");
 
-builder.Services.AddDbContext<RegistrationDbContext>(options =>
-    options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
+    builder.Services.AddDbContext<RegistrationDbContext>(options =>
+        options.UseSqlServer(connectionString, sql => sql.EnableRetryOnFailure()));
+}
 
 builder.Services.AddScoped<IRegistrationRepository, RegistrationRepository>();
 
