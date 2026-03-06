@@ -22,8 +22,14 @@ public class RegistrationRepository(RegistrationDbContext dbContext) : IRegistra
 
     public async Task<bool> EmailExistsAsync(string email, CancellationToken ct = default)
     {
+        var result = Domain.ValueObjects.Email.Create(email);
+        if (result.IsFailure)
+            return false;
+
+        var emailVo = result.Value;
+
         return await _dbContext.Registrations
-            .AnyAsync(r => r.Email.Address == email, ct);
+            .AnyAsync(r => r.Email == emailVo, ct);
     }
 
     public async Task AddAsync(RegistrationData registrationData, CancellationToken ct = default)
@@ -48,5 +54,14 @@ public class RegistrationRepository(RegistrationDbContext dbContext) : IRegistra
                                                       .ToListAsync(ct);
 
         return list;
+    }
+    public async Task<bool> TryMarkReminderSentAsync(Guid id, DateTime now, CancellationToken ct = default)
+    {
+        var affected = await _dbContext.Registrations
+            .Where(r => r.Id == id && r.LastReminderSentAt == null)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.LastReminderSentAt, now), ct);
+
+        return affected == 1;
     }
 }

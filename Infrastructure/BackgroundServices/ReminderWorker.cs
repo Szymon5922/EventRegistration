@@ -1,26 +1,32 @@
-﻿using Application.Interfaces;
+﻿using Application.Configuration;
+using Application.Interfaces;
 using Application.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Email;
 
 public class ReminderWorker : BackgroundService
 {
-    private readonly IRegistrationRepository _repo;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IEmailDispatcher _dispatcher;
     private readonly IDateTimeProvider _clock;
     private readonly ILogger<ReminderWorker> _logger;
+    private readonly AppOptions _options;
 
     public ReminderWorker(
-        IRegistrationRepository repo,
+        IServiceScopeFactory scopeFactory,
         IEmailDispatcher dispatcher,
         IDateTimeProvider clock,
+        IOptions<AppOptions> options,
         ILogger<ReminderWorker> logger)
     {
-        _repo = repo;
+        _scopeFactory = scopeFactory;
         _dispatcher = dispatcher;
         _clock = clock;
+        _options = options.Value;
         _logger = logger;
     }
 
@@ -32,7 +38,10 @@ public class ReminderWorker : BackgroundService
         {
             try
             {
-                await ProcessRemindersAsync(stoppingToken);
+                using var scope = _scopeFactory.CreateScope();
+                var repo = scope.ServiceProvider.GetRequiredService<IRegistrationRepository>();
+
+                await ProcessRemindersAsync(repo, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -43,21 +52,23 @@ public class ReminderWorker : BackgroundService
         }
     }
 
-    private async Task ProcessRemindersAsync(CancellationToken ct)
+    private async Task ProcessRemindersAsync(IRegistrationRepository repo, CancellationToken ct)
     {
         var cutoff = _clock.Now.AddHours(-1);
 
-        var list = await _repo.GetIncompleteOlderThanAsync(cutoff, ct);
+        var list = await repo.GetIncompleteOlderThanAsync(cutoff, ct);
 
         if (!list.Any())
             return;
 
         foreach (var reg in list)
         {
-            if (reg.LastReminderSentAt != null)
-                continue;
+            var marked = await repo.TryMarkReminderSentAsync(reg.Id, _clock.Now, ct);
 
-            var link = $"https://localhost:5001/registration/resume/{reg.ResumeToken}";
+            if (!marked)
+                continue; //sent by other instance
+
+            var link = $"{_options.BaseUrl}/registration/resume/{reg.ResumeToken}";
 
             var message = new EmailMessage(
                 To: reg.Email.Address,
@@ -66,9 +77,6 @@ public class ReminderWorker : BackgroundService
             );
 
             await _dispatcher.EnqueueAsync(message);
-
-            reg.LastReminderSentAt = _clock.Now;
-            await _repo.UpdateAsync(reg, ct);
         }
     }
 }
