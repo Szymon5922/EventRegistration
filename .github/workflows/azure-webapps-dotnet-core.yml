@@ -68,10 +68,11 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to Azure Web App
+        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: ${{ env.PUBLISH_OUTPUT }}
 
       - name: Smoke test
-        run: curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/health/live
+        run: curl -f "${{ steps.deploy-to-webapp.outputs.webapp-url }}/health/live"
