@@ -6,13 +6,15 @@ using Infrastructure.BackgroundServices;
 using Infrastructure.Data;
 using Infrastructure.Email;
 using Infrastructure.Repositories;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
 //Key Vault
-if(builder.Environment.IsProduction())
+if(!builder.Environment.IsDevelopment())
 {
     var keyVaultUri = builder.Configuration["KeyVault:Uri"];
     if (!string.IsNullOrWhiteSpace(keyVaultUri))
@@ -21,13 +23,21 @@ if(builder.Environment.IsProduction())
 // MVC
 builder.Services.AddControllersWithViews();
 
+
+//Insights
+builder.Services.AddApplicationInsightsTelemetry();
+
 // Serilog
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .MinimumLevel.Debug()
-    .Enrich.FromLogContext()
-    .CreateLogger();
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((ctx, services, lc) =>
+{
+    var telemetryConfig = services.GetRequiredService<TelemetryConfiguration>();
+
+    lc.MinimumLevel.Information()
+      .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+      .Enrich.FromLogContext()
+      .WriteTo.Console()
+      .WriteTo.ApplicationInsights(telemetryConfig, TelemetryConverter.Traces);
+});
 
 // Infrastructure - data access
 if (builder.Environment.IsDevelopment())
@@ -68,7 +78,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.MapStaticAssets();
