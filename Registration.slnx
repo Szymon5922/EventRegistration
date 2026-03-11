@@ -1,6 +1,21 @@
 <Solution>
-  <Project Path="Application/Application.csproj" />
-  <Project Path="Domain/Domain.csproj" />
-  <Project Path="Infrastructure/Infrastructure.csproj" />
-  <Project Path="Registration/Registration.csproj" />
+  <Folder Name="/infra/" />
+  <Folder Name="/infra/bootstrap/" />
+  <Folder Name="/infra/bootstrap/tfstate/" />
+  <Folder Name="/infra/envs/" />
+  <Folder Name="/infra/envs/dev/">
+    <File Path="infra/envs/dev/data.tf" />
+    <File Path="infra/envs/dev/imports.tf" />
+    <File Path="infra/envs/dev/main.tf" />
+    <File Path="infra/envs/dev/outputs.tf" />
+    <File Path="infra/envs/dev/providers.tf" />
+    <File Path="infra/envs/dev/terraform.tfvars" />
+    <File Path="infra/envs/dev/variables.tf" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Application/Application.csproj" />
+    <Project Path="src/Domain/Domain.csproj" />
+    <Project Path="src/Infrastructure/Infrastructure.csproj" />
+    <Project Path="src/Registration/Registration.csproj" />
+  </Folder>
 </Solution>
