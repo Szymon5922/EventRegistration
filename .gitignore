@@ -364,3 +364,5 @@ FodyWeavers.xsd
 /src/Registration/Properties
 /Registration/Properties/launchSettings.json
 /Registration/Properties/launchSettings.json
+/infra/envs/dev/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.63.0/windows_amd64
+/infra/envs/dev/terraform.tfstate
