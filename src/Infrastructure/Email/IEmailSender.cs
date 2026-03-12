@@ -1,10 +1,10 @@
-﻿using Application.Models;
+﻿using Contracts;
 
 namespace Infrastructure.Email
 {
     public interface IEmailSender
     {
-        Task<bool> SendSingleAsync(EmailMessage message);
-        Task<bool> SendBatchAsync(IEnumerable<EmailMessage> messages);
+        Task<bool> SendSingleAsync(IEmailRequest message);
+        Task<bool> SendBatchAsync(IEnumerable<IEmailRequest> messages);
     }
 }

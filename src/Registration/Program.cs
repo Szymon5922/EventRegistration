@@ -2,12 +2,14 @@ using Application.Configuration;
 using Application.Interfaces;
 using Application.Services;
 using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using Infrastructure.BackgroundServices;
 using Infrastructure.Data;
 using Infrastructure.Email;
 using Infrastructure.Repositories;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;
 
@@ -57,13 +59,25 @@ else
 
 builder.Services.AddScoped<IRegistrationRepository, RegistrationRepository>();
 
+// Service bus
+builder.Services.Configure<ServiceBusOptions>(builder.Configuration.GetSection("ServiceBus"));
+builder.Services.AddSingleton(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<ServiceBusOptions>>().Value;
+
+    return new ServiceBusClient(
+        options.FullyQualifiedNamespace,
+        new DefaultAzureCredential());
+});
+
 // Infrastructure – email subsystem
-builder.Services.AddSingleton<EmailQueue>();
+//builder.Services.AddSingleton<InMemoryEmailQueue>();
+//builder.Services.AddSingleton<IEmailDispatcher, InMemoryEmailDispatcher>();
+builder.Services.AddSingleton<IEmailDispatcher, ServiceBusDispatcher>();
 builder.Services.AddSingleton<IEmailSender, FakeEmailSender>();
-builder.Services.AddSingleton<IEmailRateLimiter, ThrottledRateLimiter>();
-builder.Services.AddSingleton<IEmailDispatcher, EmailDispatcher>();
 builder.Services.AddHostedService<EmailDispatcherHostedService>();
 builder.Services.AddHostedService<ReminderWorker>();
+
 
 // Application
 builder.Services.Configure<AppOptions>(builder.Configuration.GetSection("App"));

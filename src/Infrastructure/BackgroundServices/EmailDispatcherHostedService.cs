@@ -5,10 +5,10 @@ namespace Infrastructure.BackgroundServices;
 
 public class EmailDispatcherHostedService : BackgroundService
 {
-    private readonly EmailQueue _queue;
+    private readonly InMemoryEmailQueue _queue;
     private readonly IEmailRateLimiter _rateLimiter;
 
-    public EmailDispatcherHostedService(EmailQueue queue, IEmailRateLimiter rateLimiter)
+    public EmailDispatcherHostedService(InMemoryEmailQueue queue, IEmailRateLimiter rateLimiter)
     {
         _queue = queue;
         _rateLimiter = rateLimiter;

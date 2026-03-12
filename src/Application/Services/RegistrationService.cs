@@ -1,6 +1,7 @@
 ﻿using Application.Common;
 using Application.Interfaces;
 using Application.Models;
+using Contracts;
 using CSharpFunctionalExtensions;
 using Domain.Entities;
 using Domain.ValueObjects;
@@ -12,7 +13,7 @@ namespace Application.Services;
 public class RegistrationService : IRegistrationService
 {
     private readonly IRegistrationRepository _repo;
-    private readonly IEmailDispatcher _dispatcher;
+    private readonly IEmailDispatcher _emailDispatcher;
     private readonly IDateTimeProvider _clock;
     private readonly ILogger<RegistrationService> _logger;
     public RegistrationService(
@@ -23,7 +24,7 @@ public class RegistrationService : IRegistrationService
 
     {
         _repo = repo;
-        _dispatcher = dispatcher;
+        _emailDispatcher = dispatcher;
         _clock = clock;
         _logger = logger;
     }
@@ -128,12 +129,15 @@ public class RegistrationService : IRegistrationService
 
         await _repo.UpdateAsync(reg, ct);
 
-        var message = new EmailMessage(
-            To: reg.Email.Address,
-            Subject: "Dziękujemy za rejestrację",
-            Body: $"Twoja rejestracja została pomyślnie ukończona. Numer rejestracji:{reg.AssignedNumber}");
+        var message = new RegistrationCompletedEmailRequested(
+            MessageId: Guid.NewGuid(),
+            RegistrationId: reg.Id,
+            Recipient: reg.Email.Address,
+            AssignedNumber: reg.AssignedNumber.Value,
+            CreatedAtUtc: now,
+            Locale: "pl-PL");
 
-        await _dispatcher.EnqueueAsync(message);
+        await _emailDispatcher.EnqueueAsync(message);
 
         return Result.Success();
     }

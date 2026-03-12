@@ -1,9 +1,10 @@
-﻿using Application.Models;
+﻿using Contracts;
 
 namespace Application.Interfaces
 {
     public interface IEmailDispatcher
     {
-        Task EnqueueAsync(EmailMessage message);
+        Task EnqueueAsync(RegistrationCompletedEmailRequested request);
+        Task EnqueueAsync(ReminderEmailRequested request);
     }
 }
