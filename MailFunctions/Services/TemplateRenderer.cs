@@ -2,7 +2,12 @@
 
 namespace MailFunctions.Services
 {
-    public class TemplateRenderer
+    public interface ITemplateRenderer
+    {
+        public string Render(string template, RegistrationCompletedEmailRequested model);
+        public string Render(string template, ReminderEmailRequested model);
+    }
+    public class TemplateRenderer : ITemplateRenderer
     {
         public string Render(string template, RegistrationCompletedEmailRequested model)
         {

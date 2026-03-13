@@ -86,8 +86,15 @@ resource "azurerm_servicebus_namespace" "sb" {
   tags = var.tags
 }
 
-resource "azurerm_servicebus_queue" "email_queue" {
-  name         = var.service_bus_queue_name
+resource "azurerm_servicebus_queue" "registration_completed" {
+  name         = var.registration_completed_queue_name
+  namespace_id = azurerm_servicebus_namespace.sb.id
+
+  max_delivery_count = 10
+}
+
+resource "azurerm_servicebus_queue" "reminder" {
+  name         = var.reminder_queue_name
   namespace_id = azurerm_servicebus_namespace.sb.id
 
   max_delivery_count = 10
@@ -97,4 +104,90 @@ resource "azurerm_role_assignment" "webapp_servicebus_sender" {
   scope                = azurerm_servicebus_namespace.sb.id
   role_definition_name = "Azure Service Bus Data Sender"
   principal_id         = azurerm_windows_web_app.app.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "function_servicebus_receiver" {
+  scope                = azurerm_servicebus_namespace.sb.id
+  role_definition_name = "Azure Service Bus Data Receiver"
+  principal_id         = azurerm_windows_function_app.mail_functions.identity[0].principal_id
+}
+
+resource "azurerm_storage_account" "function_storage" {
+  name                     = var.function_storage_account_name
+  resource_group_name      = data.azurerm_resource_group.rg.name
+  location                 = data.azurerm_resource_group.rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags = var.tags
+}
+
+resource "azurerm_windows_function_app" "mail_functions" {
+  name                = var.function_app_name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  service_plan_id     = data.azurerm_service_plan.plan.id
+
+  storage_account_name       = azurerm_storage_account.function_storage.name
+  storage_account_access_key = azurerm_storage_account.function_storage.primary_access_key
+
+  https_only = true
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  site_config {
+    always_on = true
+
+    application_stack {
+      dotnet_version = "v8.0"
+    }
+  }
+
+  app_settings = {
+    "FUNCTIONS_WORKER_RUNTIME"              = "dotnet-isolated"
+    "ServiceBus__fullyQualifiedNamespace"   = "${azurerm_servicebus_namespace.sb.name}.servicebus.windows.net"
+    "RegistrationCompletedQueue"            = var.registration_completed_queue_name
+    "ReminderQueue"                         = var.reminder_queue_name
+    "AcsEmailFrom"                          = "${azurerm_email_communication_service_domain_sender_username.mail_sender.username}@${azurerm_email_communication_service_domain.mail_domain.from_sender_domain}"
+    "AcsEmailConnectionString"              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.acs_email_connection_string.versionless_id})"
+    "APPINSIGHTS_INSTRUMENTATIONKEY"        = data.azurerm_application_insights.ai.instrumentation_key
+    "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.ai.connection_string
+  }
+
+  tags = var.tags
+}
+
+resource "azurerm_email_communication_service" "mail_service" {
+  name                = var.acs_email_service_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+  data_location       = data.azurerm_resource_group.rg.location
+
+  tags = var.tags
+}
+
+resource "azurerm_email_communication_service_domain" "mail_domain" {
+  name             = var.acs_email_domain_name
+  email_service_id = azurerm_email_communication_service.mail_service.id
+  domain_management = "AzureManaged"
+
+  tags = var.tags
+}
+
+resource "azurerm_email_communication_service_domain_sender_username" "mail_sender" {
+  name      = var.acs_email_sender_username
+  domain_id = azurerm_email_communication_service_domain.mail_domain.id
+}
+
+resource "azurerm_key_vault_secret" "acs_email_connection_string" {
+  name         = "acs-email-connection-string"
+  value        = azurerm_email_communication_service.mail_service.primary_connection_string
+  key_vault_id = data.azurerm_key_vault.kv.id
+}
+
+resource "azurerm_role_assignment" "function_key_vault_secrets_user" {
+  scope                = data.azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_windows_function_app.mail_functions.identity[0].principal_id
 }

@@ -1,10 +1,12 @@
 ﻿using Azure;
 using Azure.Communication.Email;
-using MailFunctions.Interfaces;
-using MailFunctions.Models;
 
 namespace MailFunctions.Services
 {
+    public interface IEmailSender
+    {
+        Task<bool> SendSingleAsync(Models.EmailMessage email);
+    }
     public class AzureEmailSender : IEmailSender
     {
         private readonly EmailClient _client;

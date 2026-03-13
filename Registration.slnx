@@ -14,10 +14,10 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="Contracts/Contracts.csproj" Id="46a5f55f-ffb9-4463-bf2c-b25fc1722927" />
+    <Project Path="MailFunctions/MailFunctions.csproj" Id="f6433def-4cfd-4970-93ae-ffefd8c16bfa" />
     <Project Path="src/Application/Application.csproj" />
     <Project Path="src/Domain/Domain.csproj" />
     <Project Path="src/Infrastructure/Infrastructure.csproj" />
     <Project Path="src/Registration/Registration.csproj" />
   </Folder>
-  <Project Path="MailFunctions/MailFunctions.csproj" Id="f6433def-4cfd-4970-93ae-ffefd8c16bfa" />
 </Solution>

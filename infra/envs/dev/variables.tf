@@ -30,11 +30,35 @@ variable "service_bus_namespace_name" {
   type = string
 }
 
-variable "service_bus_queue_name" {
+variable "registration_completed_queue_name" {
+  type = string
+}
+
+variable "reminder_queue_name" {
   type = string
 }
 
 variable "tags" {
   type    = map(string)
   default = {}
+}
+
+variable "function_app_name" {
+  type = string
+}
+
+variable "function_storage_account_name" {
+  type = string
+}
+
+variable "acs_email_service_name" {
+  type = string
+}
+
+variable "acs_email_domain_name" {
+  type = string
+}
+
+variable "acs_email_sender_username" {
+  type = string
 }
