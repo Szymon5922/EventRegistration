@@ -1,3 +1,4 @@
+using Application.Configuration;
 using Azure.Communication.Email;
 using MailFunctions.Services;
 using Microsoft.Azure.Functions.Worker;
@@ -8,6 +9,9 @@ var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
     .ConfigureServices((context, services) =>
     {
+        services.Configure<AppOptions>(
+            context.Configuration.GetSection("App"));
+
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
 

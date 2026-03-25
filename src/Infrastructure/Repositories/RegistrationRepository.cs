@@ -48,20 +48,19 @@ public class RegistrationRepository(RegistrationDbContext dbContext) : IRegistra
     {
         var list = await _dbContext.Registrations
                                                       .AsNoTracking()
-                                                      .Where(r => !r.IsCompleted &&
-                                                                  r.LastEditedAt != null &&
-                                                                  r.LastEditedAt < cutoff)
+                                                      .Where(r => !r.IsCompleted 
+                                                                  && r.LastEditedAt != null 
+                                                                  && r.LastEditedAt < cutoff
+                                                                  && (r.LastReminderSentAt == null || r.LastReminderSentAt < cutoff))
                                                       .ToListAsync(ct);
 
         return list;
     }
-    public async Task<bool> TryMarkReminderSentAsync(Guid id, DateTime now, CancellationToken ct = default)
+    public async Task MarkReminderSentAsync(IEnumerable<Guid> ids, DateTime now, CancellationToken ct = default)
     {
-        var affected = await _dbContext.Registrations
-            .Where(r => r.Id == id && r.LastReminderSentAt == null)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(x => x.LastReminderSentAt, now), ct);
-
-        return affected == 1;
+        await _dbContext.Registrations
+           .Where(r =>ids.Contains(r.Id))
+           .ExecuteUpdateAsync(s => s
+               .SetProperty(x => x.LastReminderSentAt, now), ct);
     }
 }

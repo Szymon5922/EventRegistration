@@ -3,7 +3,6 @@ using Application.Interfaces;
 using Application.Services;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
-using Infrastructure.BackgroundServices;
 using Infrastructure.Data;
 using Infrastructure.Email;
 using Infrastructure.Repositories;
@@ -74,9 +73,7 @@ builder.Services.AddSingleton(sp =>
 //builder.Services.AddSingleton<InMemoryEmailQueue>();
 //builder.Services.AddSingleton<IEmailDispatcher, InMemoryEmailDispatcher>();
 builder.Services.AddSingleton<IEmailDispatcher, ServiceBusDispatcher>();
-builder.Services.AddSingleton<IEmailSender, FakeEmailSender>();
-builder.Services.AddHostedService<EmailDispatcherHostedService>();
-builder.Services.AddHostedService<ReminderWorker>();
+//builder.Services.AddSingleton<IEmailSender, FakeEmailSender>();
 
 
 // Application

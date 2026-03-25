@@ -5,5 +5,6 @@
         Guid MessageId { get; }
         Guid RegistrationId { get; }
         string Recipient { get; }
+        string Locale { get; }
     }
 }
