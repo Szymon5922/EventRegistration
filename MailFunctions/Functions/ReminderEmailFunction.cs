@@ -24,8 +24,8 @@ namespace MailFunctions.Functions
             _subjectProvider = subjectProvider;
         }
 
-        [Function(nameof(RegistrationCompletedEmailFunction))]
-        public async Task Run([ServiceBusTrigger("%ReminderQueue%", Connection = "ServiceBus")] ServiceBusReceivedMessage message, ILogger log)
+        [Function(nameof(ReminderEmailFunction))]
+        public async Task Run([ServiceBusTrigger("%ReminderQueue%", Connection = "ServiceBus")] ServiceBusReceivedMessage message)
         {
             SetRequest(message);
             await Handle();
