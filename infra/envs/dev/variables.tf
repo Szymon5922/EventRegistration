@@ -18,6 +18,10 @@ variable "service_plan_name" {
   type = string
 }
 
+variable "function_service_plan_name" {
+  type = string
+}
+
 variable "application_insights_name" {
   type = string
 }
@@ -61,6 +65,11 @@ variable "acs_email_domain_name" {
 
 variable "acs_email_sender_username" {
   type = string
+}
+
+variable "acs_email_data_location" {
+  type    = string
+  default = "Europe"
 }
 
 variable "acs_email_connection_string" {

@@ -125,11 +125,21 @@ resource "azurerm_storage_account" "function_storage" {
   tags = var.tags
 }
 
+resource "azurerm_service_plan" "function_plan" {
+  name                = var.function_service_plan_name
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  os_type             = "Windows"
+  sku_name            = "Y1"
+
+  tags = var.tags
+}
+
 resource "azurerm_windows_function_app" "mail_functions" {
   name                = var.function_app_name
   location            = data.azurerm_resource_group.rg.location
   resource_group_name = data.azurerm_resource_group.rg.name
-  service_plan_id     = data.azurerm_service_plan.plan.id
+  service_plan_id     = azurerm_service_plan.function_plan.id
 
   storage_account_name       = azurerm_storage_account.function_storage.name
   storage_account_access_key = azurerm_storage_account.function_storage.primary_access_key
@@ -141,7 +151,7 @@ resource "azurerm_windows_function_app" "mail_functions" {
   }
 
   site_config {
-    always_on = true
+    always_on = false
 
     application_stack {
       dotnet_version = "v10.0"
@@ -167,7 +177,7 @@ resource "azurerm_windows_function_app" "mail_functions" {
 resource "azurerm_email_communication_service" "mail_service" {
   name                = var.acs_email_service_name
   resource_group_name = data.azurerm_resource_group.rg.name
-  data_location       = data.azurerm_resource_group.rg.location
+  data_location       = var.acs_email_data_location
 
   tags = var.tags
 }
