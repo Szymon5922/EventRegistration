@@ -12,8 +12,9 @@ permissions:
 
 env:
   AZURE_WEBAPP_NAME: app-registration-wev-dev-001
-  DOTNET_VERSION: '10.0.x'
-  PUBLISH_OUTPUT: ./publish
+  DOTNET_VERSION: "10.0.x"
+  WEBAPP_PROJECT: "./src/Registration/Registration.csproj"
+  PUBLISH_OUTPUT: "./publish/webapp"
 
 jobs:
   build:
@@ -29,16 +30,16 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore Registration.slnx
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build Registration.slnx --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --configuration Release --no-build
+        run: dotnet test Registration.slnx --configuration Release --no-build
 
       - name: Publish web app
-        run: dotnet publish ./Registration/Registration.csproj -c Release -o ${{ env.PUBLISH_OUTPUT }}
+        run: dotnet publish ${{ env.WEBAPP_PROJECT }} -c Release --no-build -o ${{ env.PUBLISH_OUTPUT }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
