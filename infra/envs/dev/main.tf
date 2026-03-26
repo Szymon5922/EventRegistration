@@ -32,6 +32,9 @@ resource "azurerm_windows_web_app" "app" {
 
   app_settings = {
     "KeyVault__Uri"                                    = "https://${var.key_vault_name}.vault.azure.net/"
+    "ServiceBus__FullyQualifiedNamespace"              = "${azurerm_servicebus_namespace.sb.name}.servicebus.windows.net"
+    "ServiceBus__RegistrationCompletedQueueName"       = var.registration_completed_queue_name
+    "ServiceBus__ReminderQueueName"                    = var.reminder_queue_name
     "APPINSIGHTS_INSTRUMENTATIONKEY"                   = data.azurerm_application_insights.ai.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING"            = data.azurerm_application_insights.ai.connection_string
     "ApplicationInsightsAgent_EXTENSION_VERSION"       = "~2"
@@ -50,7 +53,7 @@ resource "azurerm_windows_web_app" "app" {
   sticky_settings {
     app_setting_names = [
       "APPINSIGHTS_INSTRUMENTATIONKEY",
-      "APPLICATIONINSIGHTS_CONNECTION_STRING ",
+      "APPLICATIONINSIGHTS_CONNECTION_STRING",
       "APPINSIGHTS_PROFILERFEATURE_VERSION",
       "APPINSIGHTS_SNAPSHOTFEATURE_VERSION",
       "ApplicationInsightsAgent_EXTENSION_VERSION",
@@ -141,7 +144,7 @@ resource "azurerm_windows_function_app" "mail_functions" {
     always_on = true
 
     application_stack {
-      dotnet_version = "v8.0"
+      dotnet_version = "v10.0"
     }
   }
 
@@ -150,7 +153,9 @@ resource "azurerm_windows_function_app" "mail_functions" {
     "ServiceBus__fullyQualifiedNamespace"   = "${azurerm_servicebus_namespace.sb.name}.servicebus.windows.net"
     "RegistrationCompletedQueue"            = var.registration_completed_queue_name
     "ReminderQueue"                         = var.reminder_queue_name
-    "AcsEmailFrom"                          = "${azurerm_email_communication_service_domain_sender_username.mail_sender.username}@${azurerm_email_communication_service_domain.mail_domain.from_sender_domain}"
+    "SqlConnectionString"                   = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/${var.sql_connection_string_secret_name}/)"
+    "App__BaseUrl"                          = "https://${azurerm_windows_web_app.app.default_hostname}"
+    "AcsEmailFrom"                          = "${azurerm_email_communication_service_domain_sender_username.mail_sender.name}@${azurerm_email_communication_service_domain.mail_domain.from_sender_domain}"
     "AcsEmailConnectionString"              = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.acs_email_connection_string.versionless_id})"
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = data.azurerm_application_insights.ai.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = data.azurerm_application_insights.ai.connection_string
@@ -176,13 +181,13 @@ resource "azurerm_email_communication_service_domain" "mail_domain" {
 }
 
 resource "azurerm_email_communication_service_domain_sender_username" "mail_sender" {
-  name      = var.acs_email_sender_username
-  domain_id = azurerm_email_communication_service_domain.mail_domain.id
+  name                    = var.acs_email_sender_username
+  email_service_domain_id = azurerm_email_communication_service_domain.mail_domain.id
 }
 
 resource "azurerm_key_vault_secret" "acs_email_connection_string" {
   name         = "acs-email-connection-string"
-  value        = azurerm_email_communication_service.mail_service.primary_connection_string
+  value        = var.acs_email_connection_string
   key_vault_id = data.azurerm_key_vault.kv.id
 }
 
@@ -190,4 +195,10 @@ resource "azurerm_role_assignment" "function_key_vault_secrets_user" {
   scope                = data.azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_windows_function_app.mail_functions.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "webapp_key_vault_secrets_user" {
+  scope                = data.azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_windows_web_app.app.identity[0].principal_id
 }

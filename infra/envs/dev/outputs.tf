@@ -27,5 +27,5 @@ output "reminder_queue_name" {
 }
 
 output "acs_sender_address" {
-  value = "${azurerm_email_communication_service_domain_sender_username.mail_sender.username}@${azurerm_email_communication_service_domain.mail_domain.from_sender_domain}"
+  value = "${azurerm_email_communication_service_domain_sender_username.mail_sender.name}@${azurerm_email_communication_service_domain.mail_domain.from_sender_domain}"
 }

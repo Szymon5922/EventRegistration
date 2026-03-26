@@ -62,3 +62,13 @@ variable "acs_email_domain_name" {
 variable "acs_email_sender_username" {
   type = string
 }
+
+variable "acs_email_connection_string" {
+  type      = string
+  sensitive = true
+}
+
+variable "sql_connection_string_secret_name" {
+  type    = string
+  default = "SqlConnectionString"
+}
